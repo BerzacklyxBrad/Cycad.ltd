@@ -34,6 +34,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.cycad.app.ui.theme.CYCADTheme
+import com.cycad.app.ui.theme.SoftBlack
 import kotlinx.coroutines.delay
 
 // --- Data Models ---
@@ -169,7 +171,7 @@ fun MainAppFlow() {
                     onNavigateToCheckout = { currentScreen = Screen.Checkout },
                     onUpdateQuantity = { item, delta -> updateCartQuantity(cart, item, delta) }
                 )
-                is Screen.Account -> AccountScreen()
+                is Screen.Account -> AccountScreen(onNavigate = { currentScreen = it })
                 is Screen.Checkout -> CheckoutScreen(
                     cart = cart,
                     onBack = { currentScreen = Screen.Cart },
@@ -255,7 +257,7 @@ fun HomeScreen(onAddToCart: (InventoryItem) -> Unit, onNavigateToCategory: () ->
                                 Text("FLASH SALES", fontWeight = FontWeight.Black, color = Color.White, fontSize = 24.sp)
                                 Text("UP TO 50% OFF EVERYTHING", color = Color.Yellow, fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.height(8.dp))
-                                Surface(color = Color.White, shape = RoundedCornerShape(4.dp)) {
+                                Surface(color = Color.Black, shape = RoundedCornerShape(4.dp)) {
                                     Text("00h : 45m : 12s", modifier = Modifier.padding(4.dp), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                                 }
                             }
@@ -369,16 +371,26 @@ fun CategoriesScreen(onAddToCart: (InventoryItem) -> Unit) {
 }
 
 @Composable
-fun AccountScreen() {
+fun AccountScreen(onNavigate: (Screen) -> Unit) {
     MainBackgroundGradient(PaddingValues(0.dp)) {
         Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
             Text("MY CYCAD ACCOUNT", fontWeight = FontWeight.Black, color = Color.White, fontSize = 24.sp)
             Spacer(Modifier.height(24.dp))
-            AccountOption(Icons.AutoMirrored.Filled.ListAlt, "My Orders")
-            AccountOption(Icons.Default.Favorite, "Wishlist")
-            AccountOption(Icons.Default.CreditCard, "CycadPay / Wallet")
-            AccountOption(Icons.Default.LocationOn, "Address Book")
-            AccountOption(Icons.Default.Settings, "Settings")
+            AccountOption(Icons.AutoMirrored.Filled.ListAlt, "My Orders"){
+                onNavigate(Screen.OrderSuccess)
+            }
+            AccountOption(Icons.Default.Favorite, "Wishlist"){
+                onNavigate(Screen.Home) // Change this to WishListScreen
+            }
+            AccountOption(Icons.Default.CreditCard, "CycadPay / Wallet"){
+                onNavigate(Screen.Home)
+            }
+            AccountOption(Icons.Default.LocationOn, "Address Book"){
+                onNavigate(Screen.Home)
+            }
+            AccountOption(Icons.Default.Settings, "Settings"){
+                onNavigate(Screen.Home)
+            }
             Spacer(Modifier.weight(1f))
             Button(
                 onClick = {},
@@ -393,16 +405,20 @@ fun AccountScreen() {
 }
 
 @Composable
-fun AccountOption(icon: ImageVector, label: String) {
+fun AccountOption(icon: ImageVector, label: String , onclick: ()-> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).border(2.dp, Color.Black, RoundedCornerShape(8.dp)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .border(2.dp, Color.Black, RoundedCornerShape(8.dp))
+            .clickable{onclick()},
         color = Color.White,
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(icon, contentDescription = null, tint = Color.Gray)
             Spacer(Modifier.width(16.dp))
-            Text(label, fontWeight = FontWeight.Bold)
+            Text(label, fontWeight = FontWeight.Bold, color = Color.Black)
             Spacer(Modifier.weight(1f))
             Icon(Icons.Default.ChevronRight, contentDescription = null)
         }
@@ -429,7 +445,7 @@ fun CompactProductCard(item: InventoryItem, onAddToCart: (InventoryItem) -> Unit
                 )
             }
             Spacer(Modifier.height(8.dp))
-            Text(item.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp)
+            Text(item.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 12.sp, color = SoftBlack)
             Text("$${item.price}", fontWeight = FontWeight.Black, color = Color.Red, fontSize = 14.sp)
             Button(
                 onClick = { onAddToCart(item) },
@@ -548,8 +564,10 @@ fun CheckoutScreen(
                         OutlinedTextField(
                             value = address,
                             onValueChange = { address = it },
-                            modifier = Modifier.fillMaxWidth().background(Color.White, RoundedCornerShape(8.dp)),
-                            placeholder = { Text("Enter your full address...") }
+                            modifier = Modifier.fillMaxWidth().background(Color.White , RoundedCornerShape(8.dp)),
+                            placeholder = { Text("Enter your full address..")},
+                            textStyle = TextStyle(color= Color.Black)
+
                         )
                         Button(onClick = { step = 2 }, enabled = address.isNotBlank(), modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = Color.Yellow, contentColor = Color.Black)) {
                             Text("PROCEED TO DELIVERY", fontWeight = FontWeight.Black)
@@ -748,6 +766,10 @@ fun CopyrightFooter() {
 }
 
 fun getFullInventory(): List<InventoryItem> = listOf(
+    // Write code to pull inventory products from the database.
+    // Ensure you have a screen on which someone saves the products
+    // for them to be fetched here
+
     // House appliances
     InventoryItem(1, "Robot Vacuum", 299.99, 15, "Self-docking smart cleaner", "CYCAD Home", "House appliances", Color(0xFFD11013)),
     InventoryItem(2, "Air Purifier", 120.00, 20, "HEAP filter air cleaning", "PureBreeze", "House appliances", Color(0xFF0055BF)),
